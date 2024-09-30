@@ -1,0 +1,17 @@
+{
+    "files.associations": {
+        "main.h": "c",
+        "inputmethod_app.h": "c",
+        "w25q.h": "c",
+        "inputmethod.h": "c",
+        "tft.h": "c",
+        "newtft.h": "c",
+        "*.tcc": "c",
+        "stdio.h": "c",
+        "tlv493d.h": "c",
+        "esp32.h": "c",
+        "2.4TFT7P.C": "cpp",
+        "string": "cpp",
+        "butterlp.h": "c"
+    }
+}
