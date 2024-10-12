@@ -32,20 +32,27 @@ InputMethodApp* InputMethodApp_Init(InputMethod* inputmethod, W25Q* w25q, TFT* t
     obj->inputmethod = inputmethod;
     obj->tft = tft;
     obj->nowselect = 0;
-
-    obj->inputmethod->buffer[0].len = 4;
-    Character ch00 = {17, 7, 52}, ch01 = {23, 7, 0}, ch02 = {1, 6, 1}, ch03 = {23, 2, 16};
-    obj->inputmethod->buffer[0].chs[0] = ch00;
-    obj->inputmethod->buffer[0].chs[1] = ch01;
-    obj->inputmethod->buffer[0].chs[2] = ch02;
-    obj->inputmethod->buffer[0].chs[3] = ch03;
-
-    // 设置默认"广东"
-    obj->inputmethod->buffer[1].len = 2;
-    Character ch0 = {6, 27, 0}, ch1 = {4, 21, 0};
-    obj->inputmethod->buffer[1].chs[0] = ch0;
-    obj->inputmethod->buffer[1].chs[1] = ch1;
     return obj;
+}
+
+// 储存历史记录到Flash中, 位置为0x100000开始
+void InputMethodApp_Save(InputMethodApp* obj){
+    // poi_name 120, poi_len 1, city_name 40, city_len 1
+    uint8_t buf[162] = {0};
+    memcpy(buf, (uint8_t*)obj->inputmethod->buffer[0].chs, 120);
+    memcpy(buf + 120, &obj->inputmethod->buffer[0].len, 1);
+    memcpy(buf + 121, (uint8_t*)obj->inputmethod->buffer[1].chs, 40);
+    memcpy(buf + 161, &obj->inputmethod->buffer[0].len, 1);
+    W25Q_WriteFlash(obj->w25q, buf, 0x100000, 162);
+}
+// 加载储存的内容
+void InputMethodApp_Load(InputMethodApp* obj){
+    uint8_t buf[162] = {0};
+    W25Q_ReadFlash(obj->w25q, buf, 0x100000, 162);
+    memcpy((uint8_t*)obj->inputmethod->buffer[0].chs, buf, 120);
+    memcpy(&obj->inputmethod->buffer[0].len, buf + 120, 1);
+    memcpy((uint8_t*)obj->inputmethod->buffer[1].chs, buf + 121, 40);
+    memcpy(&obj->inputmethod->buffer[0].len, buf + 161, 1);
 }
 
 /* 以下为文字显示的实现 */

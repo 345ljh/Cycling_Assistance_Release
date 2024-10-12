@@ -24,8 +24,8 @@ typedef struct character_t  // 使用声母,韵母,下标对应一个唯一汉�
 }Character;
 
 typedef struct inputmethod_data_t{
-    Character chs[INPUT_MAX_LEN];   // 储存文字
     uint8_t len;  // 当前完整的字符长度, 对应此时操作的buffer下标
+    Character chs[INPUT_MAX_LEN];   // 储存文字
 }InputMethodData;
 typedef struct inputmethod_t{
     InputMethodData buffer[INPUTMETHOD_DATA_AMOUNT];

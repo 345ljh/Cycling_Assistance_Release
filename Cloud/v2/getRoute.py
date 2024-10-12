@@ -16,39 +16,19 @@ class SimpleHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
         params = parse_qs(urlparse(self.path).query)
-        origin_location = params['origin_location'][0]
-        destination = params['destination'][0]
-
-        no_city = False
-        try:
-            city = params['city'][0]
-        except:
-            no_city = True
+        origin_location = params['ori_loc'][0]  # W系
+        destination_location = params['dst_loc'][0]  # G系
+        # origin_location = "113.965307,22.581946"
+        # destination_location = "113970869,22586790"
 
         # 转换起始坐标到G系
         ori_g = origin_location.split(",")
         ori_g = geotran.wgs84_to_gcj02(float(ori_g[0]), float(ori_g[1]))
         origin_location = str(np.around(ori_g[0], decimals=6)) + "," + str(np.around(ori_g[1], decimals=6))
 
-        # url_ = "https://restapi.amap.com/v3/geocode/geo?"
-        url_ = "https://restapi.amap.com/v3/place/text?"
-        if(no_city):
-            url = url_ + "&key=" + key + "&output=JSON&offset=1&page=1&extensions=base" + "&keywords=" + destination
-        else:
-            url = url_ + "&key=" + key + "&output=JSON&offset=1&page=1&extensions=base" + "&keywords=" + destination + "&city=" + city + "&citylimit=true"
-
-        response = requests.get(url)
-        get_dest_loc_data = response.json()
-        if(get_dest_loc_data['status'] == "1"):
-            # destination_location = get_dest_loc_data['geocodes'][0]['location']
-            destination_location = get_dest_loc_data['pois'][0]['location']
-        else:
-            message = {
-            "status" : 1  # 未搜索到地点
-            }
-            self.wfile.write(json.dumps(message).encode())
-            return
-
+        # 转换目的地坐标为double
+        dst_g = destination_location.split(",")
+        destination_location = str(float(dst_g[0]) / 1e6) + "," + str(float(dst_g[1]) / 1e6)
 
         # 骑行路径规划
         url_ = "https://restapi.amap.com/v4/direction/bicycling?"

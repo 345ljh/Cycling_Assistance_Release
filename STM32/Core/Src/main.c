@@ -29,8 +29,8 @@
 /* USER CODE BEGIN Includes */
 #include "inputmethod_app.h"
 #include "route_app.h"
+#include "search_app.h"
 #include "keyarray.h"
-#include "tlv493d.h"
 #include "bsp_log.h"
 /* USER CODE END Includes */
 
@@ -61,9 +61,12 @@ ESP32* esp32;
 
 InputMethodApp* inputmethodapp;
 RouteApp* routeapp;
+SearchApp* searchapp;
 
 // 前台应用
 void* foreground_app;
+// 信号量
+uint8_t signal_flag = 0;
 
 /* USER CODE END PV */
 
@@ -134,7 +137,9 @@ int main(void)
   // APP Layer init
   inputmethodapp = InputMethodApp_Init(inputmethod, w25q, tft);
   routeapp = RouteApp_Init(&htim7, &hadc1, tft, gps, esp32, inputmethod, w25q);
+  searchapp = SearchApp_Init(w25q, tft, esp32, gps);
 
+  InputMethodApp_Load(inputmethodapp);
   gps->data.latitude = 22.581946;
   gps->data.longitude = 113.965307;
   
@@ -150,11 +155,158 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-    if(routeapp->esp32->rx_data_temp.flag == 1 || routeapp->esp32->rx_data_temp.flag == 2){  // 规划失败
-      RouteApp_ShowError(routeapp);
-      routeapp->esp32->rx_data_temp.flag = 0;
+    /* USER CODE BEGIN 3 */
+
+    if(signal_flag == 0x10){
+      InputMethodApp_Delete(inputmethodapp);
+      signal_flag = 0;
     }
-    if(routeapp->esp32->rx_data_temp.flag == 255){  // 规划成功
+    if(signal_flag == 0x11){
+      InputMethodApp_Up(inputmethodapp);
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x12){
+      InputMethodApp_Ascii(inputmethodapp);
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x13){
+      RouteApp_SendSearchingMessage(routeapp);
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x14){
+      InputMethodApp_Prev(inputmethodapp);
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x15){
+      InputMethodApp_Ensure(inputmethodapp);
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x16){
+      InputMethodApp_Next(inputmethodapp);
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x17){
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x18){
+      InputMethodApp_Clear(inputmethodapp);
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x19){
+      InputMethodApp_Down(inputmethodapp);
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x1A){
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x1B){
+      InputMethodApp_Switch(inputmethodapp);
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x20){
+      foreground_app = inputmethodapp;
+      TFT_Fill(routeapp->tft, 0, 30, 320, 41, 0);
+      InputMethodApp_UpdateInput(inputmethodapp);
+      InputMethodApp_UpdateSelection(inputmethodapp);
+      InputMethodApp_UpdateTyped(inputmethodapp);
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x21){
+      SearchApp_Up(searchapp);
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x22){
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x23){
+      SearchApp_Send(searchapp);
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x24){
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x25){
+      SearchApp_Send(searchapp);
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x26){
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x27){
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x28){
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x29){
+      SearchApp_Down(searchapp);
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x2A){
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x2B){
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x2F){  // 搜索到地点
+      foreground_app = searchapp;
+      SearchApp_UpdateName(searchapp);
+      SearchApp_UpdateSelection(searchapp);
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x30){
+      foreground_app = inputmethodapp;
+      TFT_Fill(routeapp->tft, 0, 30, 320, 41, 0);
+      InputMethodApp_UpdateInput(inputmethodapp);
+      InputMethodApp_UpdateSelection(inputmethodapp);
+      InputMethodApp_UpdateTyped(inputmethodapp);
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x31){
+      if(!gps->watchdog_count) gps->data.latitude += GPS_OFFLINE_ADJUST_STEP;
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x32){
+      routeapp->zoom_rate_temp *= 1.2589254f;  // 2dB
+      if(routeapp->zoom_rate_temp >= 10) routeapp->zoom_rate_temp = 10;
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x33){
+      SearchApp_Send(searchapp);
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x34){
+      if(!gps->watchdog_count) gps->data.longitude -= GPS_OFFLINE_ADJUST_STEP;
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x35){
+      routeapp->zoom_rate = routeapp->zoom_rate_temp;
+      signal_flag = 0x3F;
+    }
+    if(signal_flag == 0x36){
+      if(!gps->watchdog_count) gps->data.longitude += GPS_OFFLINE_ADJUST_STEP;
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x37){
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x38){
+      InputMethodApp_Clear(inputmethodapp);
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x39){
+      if(!gps->watchdog_count) gps->data.latitude -= GPS_OFFLINE_ADJUST_STEP;
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x3A){
+      routeapp->zoom_rate_temp /= 1.2589254f;
+      if(routeapp->zoom_rate_temp <= 1) routeapp->zoom_rate_temp = 1;
+    }
+    if(signal_flag == 0x3B){
+      signal_flag = 0;
+    }
+    if(signal_flag == 0x3E){  // 规划成功
+      InputMethodApp_Save(inputmethodapp);
       routeapp->mileage = 0;
       routeapp->zoom_rate = 1;
       routeapp->zoom_rate_temp = 1;
@@ -162,14 +314,17 @@ int main(void)
       TFT_Fill(routeapp->tft, 0, 0, 320, 241, 0);
       RouteApp_SetStatus(routeapp);
       foreground_app = routeapp;
-      routeapp->esp32->rx_data_temp.flag = 254;
+      signal_flag = 0x3F;
     }
-    if(routeapp->esp32->rx_data_temp.flag == 254){  // 手动修改zoom大小, 或是规划成功后初始化路径显示
+    if(signal_flag == 0x3F){  // 手动修改zoom大小, 或是规划成功后初始化路径显示
       RouteApp_SetRoute(routeapp);
-      routeapp->esp32->rx_data_temp.flag = 0;
+      signal_flag = 0;
     }
-    HAL_Delay(200);
-    /* USER CODE BEGIN 3 */
+    if(signal_flag >= 0xF0 && signal_flag <= 0xFF){  // 规划失败
+      RouteApp_ShowError(routeapp);
+      signal_flag = 0;
+    }
+    HAL_Delay(50);
   }
   /* USER CODE END 3 */
 }
@@ -230,69 +385,16 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
     }
   }
   if(keydown){ // pin = 2/3/4/5
-    if(HAL_GetTick() - keyarray->last_irq_time < 100) return;  // 限制中断触发频率
+    if(HAL_GetTick() - keyarray->last_irq_time < 200) return;  // 限制中断触发频率
     KeyArray_Judge(keyarray, GPIO_Pin);
 
-    switch(keyarray->now_key){
-      case 0:
-        if(foreground_app == inputmethodapp) InputMethodApp_Delete(inputmethodapp);
-        break;        
-      case 1:
-        if(foreground_app == inputmethodapp) InputMethodApp_Up(inputmethodapp);
-        if(foreground_app == routeapp && !gps->watchdog_count) gps->data.latitude += GPS_OFFLINE_ADJUST_STEP;
-        break;
-      case 2:
-        if(foreground_app == inputmethodapp) InputMethodApp_Ascii(inputmethodapp);
-        if(foreground_app == routeapp){
-          routeapp->zoom_rate_temp *= 1.2589254f;  // 2dB
-          if(routeapp->zoom_rate_temp >= 10) routeapp->zoom_rate_temp = 10;
-        }
-        break;
-      case 3:
-        if(foreground_app == inputmethodapp) RouteApp_SendMessage(routeapp);
-        break;
-      case 4:
-        if(foreground_app == inputmethodapp) InputMethodApp_Prev(inputmethodapp);
-        if(foreground_app == routeapp && !gps->watchdog_count) gps->data.longitude -= GPS_OFFLINE_ADJUST_STEP;
-        break;
-      case 5:
-        if(foreground_app == inputmethodapp) InputMethodApp_Ensure(inputmethodapp);
-        if(foreground_app == routeapp){
-          routeapp->zoom_rate = routeapp->zoom_rate_temp;
-          // 直接在这里RouteApp_SetRoute(routeapp);会导致GPS数据解析不正常, 疑似中断执行时间过长导致
-          routeapp->esp32->rx_data_temp.flag = 254;  // 这里直接使用了esp32的接收flag, 方便第一次进入routeapp时复用函数
-        }
-        break;
-      case 6:
-        if(foreground_app == inputmethodapp) InputMethodApp_Next(inputmethodapp);
-        if(foreground_app == routeapp && !gps->watchdog_count) gps->data.longitude += GPS_OFFLINE_ADJUST_STEP;
-        break;
-      case 7:
-        if(foreground_app == routeapp){
-            foreground_app = inputmethodapp;
-            TFT_Fill(routeapp->tft, 0, 30, 320, 41, 0);
-            InputMethodApp_UpdateInput(inputmethodapp);
-            InputMethodApp_UpdateSelection(inputmethodapp);
-            InputMethodApp_UpdateTyped(inputmethodapp);
-        };
-        break;
-      case 8:
-        if(foreground_app == inputmethodapp) InputMethodApp_Clear(inputmethodapp);
-        break;
-      case 9:
-        if(foreground_app == inputmethodapp) InputMethodApp_Down(inputmethodapp);
-        if(foreground_app == routeapp && !gps->watchdog_count) gps->data.latitude -= GPS_OFFLINE_ADJUST_STEP;
-        break;
-      case 10:
-        if(foreground_app == routeapp){
-          routeapp->zoom_rate_temp /= 1.2589254f;
-          if(routeapp->zoom_rate_temp <= 1) routeapp->zoom_rate_temp = 1;
-        }
-      case 11:
-        if(foreground_app == inputmethodapp) InputMethodApp_Switch(inputmethodapp);
-        break;
-      }
+    signal_flag = keyarray->now_key;
+    if(foreground_app == inputmethodapp) signal_flag += 0x10;
+    if(foreground_app == searchapp) signal_flag += 0x20;
+    if(foreground_app == routeapp) signal_flag += 0x30;
+
     keyarray->last_irq_time = HAL_GetTick();
+    keyarray->now_key = 0;
   }
 }
 
@@ -328,7 +430,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         Point pos = {gps->data.longitude, gps->data.latitude};
         if(RouteApp_IsOutRange(routeapp, pos)){
           routeapp->show_center = pos;
-          RouteApp_SetRoute(routeapp);
+          signal_flag = 0x3F;
         }
         else RouteApp_UpdateRoute(routeapp);
         RouteApp_UpdateStatus(routeapp);      

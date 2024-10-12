@@ -41,7 +41,7 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-
+extern uint8_t signal_flag;
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/

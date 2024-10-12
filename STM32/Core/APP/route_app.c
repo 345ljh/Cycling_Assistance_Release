@@ -301,12 +301,26 @@ void RouteApp_SendMessage(RouteApp* obj){
     ESP32_SendDestinationName(obj->esp32, dst_name, city);
 }
 
+void RouteApp_SendSearchingMessage(RouteApp* obj){
+    uint16_t sch_name[30] = {0};
+    for(int i = 0; i < obj->inputmethod->buffer[0].len; i++){
+        W25Q_ReadFlash(obj->w25q, (uint8_t*)sch_name + 2 * i, 0xF0000 + (character_offset[obj->inputmethod->buffer[0].chs[i].initial * FINAL_AMOUNT + obj->inputmethod->buffer[0].chs[i].final] + obj->inputmethod->buffer[0].chs[i].index) * 2, 2);
+    }
+
+    uint16_t city[10] = {0};
+    for(int i = 0; i < obj->inputmethod->buffer[1].len; i++){
+        W25Q_ReadFlash(obj->w25q, (uint8_t*)city + 2 * i, 0xF0000 + (character_offset[obj->inputmethod->buffer[1].chs[i].initial * FINAL_AMOUNT + obj->inputmethod->buffer[1].chs[i].final] + obj->inputmethod->buffer[1].chs[i].index) * 2, 2);
+    }
+
+    ESP32_SendSearchName(obj->esp32, sch_name, city);
+}
+
 void RouteApp_ShowError(RouteApp* obj){
-    switch (obj->esp32->rx_data_temp.flag){
-    case 1:
+    switch (signal_flag){
+    case 0xF1:
         TFT_DrawStr_ascii(obj->tft, 0, 0, "Fail to find destination!", RGB2565(255, 0, 0), 26);
         break;
-    case 2:
+    case 0xF2:
         TFT_DrawStr_ascii(obj->tft, 0, 0, "Fail to plan the route!", RGB2565(255, 0, 0), 24);
         break;
     }

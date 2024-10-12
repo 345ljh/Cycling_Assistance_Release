@@ -27,6 +27,9 @@ void InputMethodApp_UpdateInput(InputMethodApp* obj);
 void InputMethodApp_UpdateSelection(InputMethodApp* obj);
 void InputMethodApp_UpdateTyped(InputMethodApp* obj);
 
+void InputMethodApp_Save(InputMethodApp* obj);
+void InputMethodApp_Load(InputMethodApp* obj);
+
 void InputMethodApp_Prev(InputMethodApp* obj);
 void InputMethodApp_Next(InputMethodApp* obj);
 void InputMethodApp_Up(InputMethodApp* obj);

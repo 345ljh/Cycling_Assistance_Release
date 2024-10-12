@@ -15,22 +15,25 @@ KeyArray* KeyArray_Init(GPIO_TypeDef** row_gpio, uint16_t* row_pin, GPIO_TypeDef
 
 // 确定按下的按键
 void KeyArray_Judge(KeyArray* obj, uint16_t GPIO_Pin){
-    obj->now_key = 0;
+    uint8_t tmp = obj->now_key;
+    tmp = 0;
     for(int i = 0; i < KEY_COL; i++){
         if(obj->col_pin[i] == GPIO_Pin || !HAL_GPIO_ReadPin(obj->col_gpio[i], obj->col_pin[i])){
-            obj->now_key += i;
+            tmp += i;
             break;
         }
     }
 
     for(int i = 0; i < KEY_ROW; i++){
         HAL_GPIO_WritePin(obj->row_gpio[i], obj->row_pin[i], 1);
-        if(HAL_GPIO_ReadPin(obj->col_gpio[obj->now_key], obj->col_pin[obj->now_key])){
-            obj->now_key += KEY_COL * i;
+        if(HAL_GPIO_ReadPin(obj->col_gpio[tmp], obj->col_pin[tmp])){
+            tmp += KEY_COL * i;
             HAL_GPIO_WritePin(obj->row_gpio[i], obj->row_pin[i], 0);  
             break;
         }
         HAL_GPIO_WritePin(obj->row_gpio[i], obj->row_pin[i], 0);
     }
+
+    if(tmp > obj->now_key) obj->now_key = tmp;
 
 }

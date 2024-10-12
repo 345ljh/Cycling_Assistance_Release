@@ -39,6 +39,7 @@ void RouteApp_SetRoute(RouteApp* obj);
 void RouteApp_UpdateRoute(RouteApp* obj);
 
 void RouteApp_SendMessage(RouteApp* obj);
+void RouteApp_SendSearchingMessage(RouteApp* obj);
 
 void RouteApp_ShowError(RouteApp* obj);
 uint8_t RouteApp_IsOutRange(RouteApp* obj, Point point);

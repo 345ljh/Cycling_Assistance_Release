@@ -5,12 +5,15 @@
 #include "malloc.h"
 #include "string.h"
 #include "bsp_log.h"
+#include "inputmethod.h"
+#include "main.h"
 
 #define ESP_BUFFER_LEN 128
 #define DESTNAME_MAX_LEN 30
 
 #define SEND_ORIGIN_POSITION_DATALEN 16
 #define SEND_DESTINATION_NAME_DATALEN 80
+#define SEND_SEARCH_SELECTION_DATALEN 1
 
 #pragma pack(1)
 typedef struct point_t
@@ -36,6 +39,12 @@ typedef struct rx_routepoint_t
     Point* routes;
 }RxRoutePoint;
 
+typedef struct searchname_t
+{
+    uint8_t selection_cnt;
+    InputMethodData selection[6];
+}RxSearchName;
+
 #pragma pack()
 
 
@@ -46,7 +55,7 @@ typedef struct esp32_t
     struct{
         RxTest rxtest;
         RxRoutePoint routepoint;
-        uint8_t flag;
+        RxSearchName searchname;
     }rx_data_temp;
     
 }ESP32;
@@ -54,6 +63,8 @@ typedef struct esp32_t
 ESP32 *ESP32_Init(UART_HandleTypeDef *huart);
 void ESP32_SendOriginPosition(ESP32* obj, Point origin);
 void ESP32_SendDestinationName(ESP32* obj, uint16_t* name, uint16_t* city);
+void ESP32_SendSearchName(ESP32* obj, uint16_t* name, uint16_t* city);
+void ESP32_SendSearchSelection(ESP32* obj, uint8_t sel);
 
 void ESP32_RxCallback(ESP32 *obj);
 void ESP32_Solve(ESP32* obj);

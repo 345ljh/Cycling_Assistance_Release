@@ -1,16 +1,17 @@
 
 
+OpenDocument="esp32.c", FilePath="D:/Unfinished/input_method/STM32/Core/HAL/esp32.c", Line=66
 OpenDocument="inputmethod_app.c", FilePath="D:/Unfinished/input_method/STM32/Core/APP/inputmethod_app.c", Line=59
 OpenDocument="stm32f1xx_hal.c", FilePath="D:/Unfinished/input_method/STM32/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal.c", Line=297
-OpenDocument="main.c", FilePath="D:/Unfinished/input_method/STM32/Core/Src/main.c", Line=79
+OpenDocument="main.c", FilePath="D:/Unfinished/input_method/STM32/Core/Src/main.c", Line=80
 OpenDocument="tft.c", FilePath="D:/Unfinished/input_method/STM32/Core/HAL/tft.c", Line=375
-OpenDocument="stm32f1xx_it.c", FilePath="D:/Unfinished/input_method/STM32/Core/Src/stm32f1xx_it.c", Line=87
+OpenDocument="stm32f1xx_it.c", FilePath="D:/Unfinished/input_method/STM32/Core/Src/stm32f1xx_it.c", Line=85
 OpenDocument="stm32f1xx_hal_tim_ex.h", FilePath="D:/Unfinished/input_method/STM32/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h", Line=0
 OpenToolbar="Debug", Floating=0, x=0, y=0
-OpenWindow="Call Stack", DockArea=RIGHT, x=0, y=0, w=746, h=238, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Call Stack", DockArea=RIGHT, x=0, y=0, w=746, h=248, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
 OpenWindow="Source Files", DockArea=LEFT, x=0, y=0, w=315, h=659, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
 OpenWindow="Memory 1", DockArea=BOTTOM, x=0, y=0, w=631, h=254, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, EditorAddress=0x800D06F
-OpenWindow="Watched Data 1", DockArea=RIGHT, x=0, y=1, w=746, h=420, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Watched Data 1", DockArea=RIGHT, x=0, y=1, w=746, h=410, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
 OpenWindow="Terminal", DockArea=BOTTOM, x=3, y=0, w=868, h=254, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
 OpenWindow="Data Sampling", DockArea=BOTTOM, x=2, y=0, w=291, h=254, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VisibleTab=1, UniformSampleSpacing=0
 OpenWindow="Console", DockArea=BOTTOM, x=1, y=0, w=127, h=254, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
@@ -20,7 +21,7 @@ TableHeader="Source Files", SortCol="File", SortOrder="DESCENDING", VisibleCols=
 TableHeader="Data Sampling Setup", SortCol="# Changes", SortOrder="ASCENDING", VisibleCols=["Expression";"Type";"Value";"Min";"Max";"Average";"# Changes";"Min. Change";"Max. Change"], ColWidths=[118;100;100;100;100;100;110;126;126]
 TableHeader="Data Sampling Table", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time"], ColWidths=[100;191]
 TableHeader="Power Sampling", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
-TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[247;255;134;100]
+TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[247;255;134;110]
 TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
 TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[200;100;100;1156]
 WatchedExpression="inputmethodapp", RefreshRate=5, Window=Watched Data 1

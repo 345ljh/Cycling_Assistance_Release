@@ -13,9 +13,8 @@ typedef struct point_t {
 } Point;
 
 char local_response_buffer[1024];
-const char* ssid = "oplus_co_apvqii";
-const char* password = "23459876";
-const char* hw_key = "your_hwcloud_functiongraph_key";
+const char* ssid = "wifi_name";
+const char* password = "wifi_password";
 
 hw_timer_t* htim = NULL;  // 检测wifi连接
 bool wifi_connected = false;
@@ -28,13 +27,15 @@ Point rx_ori_pos = {0};
 
 // 储存json
 DynamicJsonDocument doc(16384);
+// 暂存search得到的6个坐标(转换int)
+uint32_t schpos_lng[6] = {0};
+uint32_t schpos_lat[6] = {0};
 
-uint8_t AccessUrl(Point ori_pos, uint16_t* dst_name, uint16_t* city) {
+uint8_t AccessRoutingUrl(Point ori_pos, uint16_t* dst_name, uint16_t* city) {
   // 拼接url
-  // char url[512] = "https://e953bf342ddc4f2f8129a6177546e527.apig.cn-north-4.huaweicloudapis.com/user/getroute?origin_location=113.965307,22.581946&destination=%E6%B7%B1%E5%9C%B3%E5%8C%97%E7%AB%99";
   char url[512] = "";
-  sprintf(url, "https://%s.apig.cn-north-4.huaweicloudapis.com/user/getroute?origin_location=%f,%f&destination=",
-          hw_key, ori_pos.longitude, ori_pos.latitude);
+  sprintf(url, "https://your_huawei_key.apig.cn-north-4.huaweicloudapis.com/user/getroute?origin_location=%f,%f&destination=",
+          ori_pos.longitude, ori_pos.latitude);
   for (int i = 0; i < 30; i++) {
     if (dst_name[i] < 255) {  // ascii字符
       url[strlen(url)] = (uint8_t)dst_name[i];
@@ -55,6 +56,89 @@ uint8_t AccessUrl(Point ori_pos, uint16_t* dst_name, uint16_t* city) {
     if (city[i] < 255) {  // ascii字符
       url[strlen(url)] = (uint8_t)city[i];
     } else {  // 汉字转换成3个u8的形式, 如"深圳北站" 6df1 5733 5317 7ad9->%e6%b7%b1%e5%9c%b3%e5%8c%97%e7%ab%99
+      char temp[10];
+      uint8_t b[3] = {
+        0xe0 | ((city[i] & 0xf000) >> 12),
+        0x80 | ((city[i] & 0xfc0) >> 6),
+        0x80 | (city[i] & 0x3f)
+      };
+      sprintf(temp, "%%%2x%%%2x%%%2x", b[0], b[1], b[2]);
+      strcat(url, temp);
+    }
+  }
+  Serial.println(url);
+
+  // 发送HTTP GET请求
+  HTTPClient http;
+  http.begin(url);
+  int httpCode = http.GET();
+
+  uint8_t success = 0;
+  if (httpCode > 0) {                   // 检查响应码
+    String payload = http.getString();  // 获取响应的内容
+    Serial.println("Response:");
+    Serial.println(payload);
+
+    // 解析json
+    deserializeJson(doc, payload);
+    success = 1;
+  } else {
+    Serial.printf("Error on HTTP request: %s\n", http.errorToString(httpCode).c_str());
+  }
+  http.end();  // 关闭HTTP连接
+  return success;
+}
+
+uint8_t AccessRoutingUrl_v2(Point ori_pos, uint8_t sel) {
+  char url[512] = "";
+  sprintf(url, "https://your_huawei_key.apig.cn-north-4.huaweicloudapis.com/get_route?ori_loc=%f,%f&dst_loc=%d,%d",
+          ori_pos.longitude, ori_pos.latitude, schpos_lng[sel], schpos_lat[sel]);
+  Serial.println(url);
+
+  // 发送HTTP GET请求
+  HTTPClient http;
+  http.begin(url);
+  int httpCode = http.GET();
+
+  uint8_t success = 0;
+  if (httpCode > 0) {                   // 检查响应码
+    String payload = http.getString();  // 获取响应的内容
+    Serial.println("Response:");
+    Serial.println(payload);
+
+    // 解析json
+    deserializeJson(doc, payload);
+    success = 1;
+  } else {
+    Serial.printf("Error on HTTP request: %s\n", http.errorToString(httpCode).c_str());
+  }
+  http.end();  // 关闭HTTP连接
+  return success;
+}
+
+
+uint8_t AccessSearchingUrl(uint16_t* sch_name, uint16_t* city) {
+  char url[512] = "https://your_huawei_key.apig.cn-north-4.huaweicloudapis.com/search_dst_name?searchname=";
+  for (int i = 0; i < 30; i++) {
+    if (sch_name[i] < 255) {
+      url[strlen(url)] = (uint8_t)sch_name[i];
+    } else {
+      char temp[10];
+      uint8_t b[3] = {
+        0xe0 | ((sch_name[i] & 0xf000) >> 12),
+        0x80 | ((sch_name[i] & 0xfc0) >> 6),
+        0x80 | (sch_name[i] & 0x3f)
+      };
+      sprintf(temp, "%%%2x%%%2x%%%2x", b[0], b[1], b[2]);
+      strcat(url, temp);
+    }
+  }
+
+  strcat(url, "&city=");
+  for (int i = 0; i < 10; i++) {
+    if (city[i] < 255) {
+      url[strlen(url)] = (uint8_t)city[i];
+    } else {
       char temp[10];
       uint8_t b[3] = {
         0xe0 | ((city[i] & 0xf000) >> 12),
@@ -126,7 +210,7 @@ void setup() {
 
   //   Point origin = {113.965307,22.581946};
   // uint16_t name[30] = {0x6df1, 0x5733, 0x5317, 0x7ad9};
-  // AccessUrl(origin, name);
+  // AccessRoutingUrl(origin, name);
 
 }
 
@@ -158,13 +242,19 @@ void loop() {
         // 处理数据
         if(rxbuf[1] == 0x11){  // GPS定位信息
           memcpy((uint8_t*)&rx_ori_pos, rxbuf + 3, 16);
-        } else if(rxbuf[1] == 0x12){  // 目的地名称
+        } else if(rxbuf[1] == 0x12 || rxbuf[1] == 0x14){  // 目的地名称
           // 访问url
-          uint16_t rx_dst_name[30];
-          memcpy((uint8_t*)rx_dst_name, rxbuf + 3, 60);
-          uint16_t city[10];
-          memcpy((uint8_t*)city, rxbuf + 63, 20);
-          while(!AccessUrl(rx_ori_pos, rx_dst_name, city));
+          if(rxbuf[1] == 0x12){
+            uint16_t rx_dst_name[30];
+            memcpy((uint8_t*)rx_dst_name, rxbuf + 3, 60);
+            uint16_t city[10];
+            memcpy((uint8_t*)city, rxbuf + 63, 20);
+            while(!AccessRoutingUrl(rx_ori_pos, rx_dst_name, city));
+          } else {
+            uint8_t sel = rxbuf[3];
+            while(!AccessRoutingUrl_v2(rx_ori_pos, sel));
+          }
+
           if(doc["status"] == 0){  // 规划成功
             // 发送路径参数
             uint8_t txbuf[35] = {0x02, 0x91, 31};
@@ -215,6 +305,42 @@ void loop() {
               txbuf_route[3] = doc["status"];
               txbuf_route[4] = 0x04;
               uart.write(txbuf_route, 5);
+          }
+        } else if(rxbuf[1] == 0x13){  // 搜索
+          // 访问url
+          uint16_t rx_sch_name[30];
+          memcpy((uint8_t*)rx_sch_name, rxbuf + 3, 60);
+          uint16_t city[10];
+          memcpy((uint8_t*)city, rxbuf + 63, 20);
+          while(!AccessSearchingUrl(rx_sch_name, city));
+          if(doc["status"] == 0){
+            uint8_t count = doc["count"].as<uint8_t>();
+            for(int i = 0; i < count; i++){
+              // 暂存坐标
+              schpos_lng[i] = doc["name"][i]["location"][0].as<uint32_t>();
+              schpos_lat[i] = doc["name"][i]["location"][1].as<uint32_t>();
+
+              uint8_t txbuf[127] = {0x02, 0x94, 123};
+              uint8_t length = doc["name"][i]["length"].as<uint8_t>();
+              txbuf[3] = count;
+              txbuf[4] = i;
+              txbuf[5] = length;
+              for(int j = 0; j < length; j++){
+                uint8_t c0 = doc["name"][i]["encoded"][j * 3].as<uint8_t>(), c1 = doc["name"][i]["encoded"][j * 3 + 1].as<uint8_t>();
+                uint16_t c2 = doc["name"][i]["encoded"][j * 3 + 2].as<uint16_t>();
+                memcpy(txbuf + 6 + 4 * j, &c0, 1);
+                memcpy(txbuf + 7 + 4 * j, &c1, 1);
+                memcpy(txbuf + 8 + 4 * j, (uint8_t*)&c2, 2);
+              }
+              uart.write(txbuf, 127);
+              delay(20);
+            }
+          } else {
+            // 0x11: 未搜索到地点
+              uint8_t txbuf[5] = {0x02, 0x93, 1};
+              txbuf[3] = 0x11;
+              txbuf[4] = 0x04;
+              uart.write(txbuf, 5);
           }
         }
         // 清空缓冲区

@@ -1,5 +1,6 @@
 # 骑行辅助显示系统 CyclingAssistance 🚴🤝
 限于篇幅，使用说明与代码解析见README.pdf。
+后续更新的内容见v2_update.pdf。
 
 3D: 外壳Solidworks模型与stl文件。  
 Cloud: 华为云FunctionGraph上代码。  

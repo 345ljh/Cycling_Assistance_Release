@@ -10,9 +10,15 @@
 发送当前gps定位 0x11 16byte
 经纬度 16byte
 
-发送目的地名称  0x12 80byte
+(v1/v2)发送目的地名称  0x12 80byte
 目的地名称uint16 30*2=60byte
 城市名称uint16 20byte
+
+(v2)发送搜索地名称  0x13 80byte
+同0x12
+
+(v2)搜索后发送选定目的地 0x14 1byte
+目的地0~4 1byte
 
 接收测试信息 0x90 16byte
 
@@ -29,6 +35,12 @@
 
 规划失败 0x93 1byte
 错误信息uint8 1byte
+
+(v2)搜索到目的地信息 0x94 123byte
+搜索地点数 1byte
+当前序号 1byte
+长度 1byte
+编码为(u8,u8,u16)的地名 <=4byte*30=120byte
 
 完整数据<=128byte
 */
@@ -65,6 +77,21 @@ void ESP32_SendDestinationName(ESP32* obj, uint16_t* name, uint16_t* city){
     HAL_UART_Transmit(obj->huart, tx_buf, SEND_DESTINATION_NAME_DATALEN + 4, 1000);
 }
 
+void ESP32_SendSearchName(ESP32* obj, uint16_t* name, uint16_t* city){
+    uint8_t tx_buf[SEND_DESTINATION_NAME_DATALEN + 4] = {0x02, 0x13, SEND_DESTINATION_NAME_DATALEN};
+    memcpy(tx_buf + 3, (uint8_t*)name, 60);
+    memcpy(tx_buf + 63, (uint8_t*)city, 20);
+    tx_buf[SEND_DESTINATION_NAME_DATALEN + 3] = 0x04;
+    HAL_UART_Transmit(obj->huart, tx_buf, SEND_DESTINATION_NAME_DATALEN + 4, 1000);
+}
+
+void ESP32_SendSearchSelection(ESP32* obj, uint8_t sel){
+    uint8_t tx_buf[SEND_SEARCH_SELECTION_DATALEN + 4] = {0x02, 0x14, SEND_SEARCH_SELECTION_DATALEN};
+    memcpy(tx_buf + 3, &sel, 1);
+    tx_buf[SEND_SEARCH_SELECTION_DATALEN + 3] = 0x04;
+    HAL_UART_Transmit(obj->huart, tx_buf, SEND_SEARCH_SELECTION_DATALEN + 4, 1000);
+}
+
 void ESP32_RxCallback(ESP32 *obj){
     __HAL_UART_CLEAR_IDLEFLAG(obj->huart);  // 清除中断标志位
     HAL_UART_DMAStop(obj->huart);
@@ -92,21 +119,20 @@ void ESP32_Solve(ESP32 *obj){
         memset(obj->rx_data_temp.routepoint.routes, 0, sizeof(Point) * obj->rx_data_temp.routepoint.len);
     } else if(obj->rxbuf[1] == 0x92){
         printf_log("received 0x92\n");
-        // for(int i = 0; i < 85; i++){
-        //     printf_log("%d %d\n", i, obj->rxbuf[i]);
-        // }
-       for(int j = 0; j < 5; j++){
-        if(5 * obj->rxbuf[3] + j < obj->rx_data_temp.routepoint.len){
-            memcpy((uint8_t*)&(obj->rx_data_temp.routepoint.routes[5 * obj->rxbuf[3] + j]), obj->rxbuf + 4 + 16 * j, 16);
-            // char str1[30] = {0}, str2[30] = {0};
-            // Float2Str(str1, obj->rx_data_temp.routepoint.routes[5 * obj->rxbuf[3] + j].longitude);
-            // Float2Str(str2, obj->rx_data_temp.routepoint.routes[5 * obj->rxbuf[3] + j].latitude);
-            // printf_log("%d %s %s", 5 * obj->rxbuf[3] + j, str1, str2);
+        for(int j = 0; j < 5; j++){
+            if(5 * obj->rxbuf[3] + j < obj->rx_data_temp.routepoint.len){
+                memcpy((uint8_t*)&(obj->rx_data_temp.routepoint.routes[5 * obj->rxbuf[3] + j]), obj->rxbuf + 4 + 16 * j, 16);
+            }
         }
-       }
-       obj->rx_data_temp.flag = 255;
+        signal_flag = 0x3E;
     } else if(obj->rxbuf[1] == 0x93){
         printf_log("received 0x93\n");
-        obj->rx_data_temp.flag = obj->rxbuf[3];
+        signal_flag = obj->rxbuf[3] + 0xF0;
+    } else if(obj->rxbuf[1] == 0x94){
+        printf_log("received 0x94\n");
+        obj->rx_data_temp.searchname.selection_cnt = obj->rxbuf[3];
+        obj->rx_data_temp.searchname.selection[obj->rxbuf[4]].len = obj->rxbuf[5];
+        memcpy((uint8_t*)obj->rx_data_temp.searchname.selection[obj->rxbuf[4]].chs, obj->rxbuf + 6, obj->rxbuf[5] * 4);
+        signal_flag = 0x2F;
     }
 }
